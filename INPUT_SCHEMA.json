@@ -9,7 +9,7 @@
             "description": "Search URLs",
             "prefill": [
                 {
-                    "url": "https://www.fiverr.com/categories/graphics-design/logo-design"
+                    "url": "https://www.fiverr.com/categories/graphics-design/creative-logo-design?source=vertical-buckets"
                 }
             ],
             "editor": "requestListSources"
