@@ -1,66 +1,118 @@
-# Upwork Job Scraper
+# Fiverr Gig Scraper
 
-This scraper extracts detailed job information from Upwork job listings based on the provided Upwork job search URL.
+This scraper extracts detailed information from Fiverr gig listings based on the provided Fiverr category or search URL.
 
 ## Input
 
-Check the json example in input tab:
-https://apify.com/arlusm/upwork-scraper-with-fresh-job-posts/input-schema
+### Example Input
+The scraper accepts a JSON input to define the scraping parameters, such as the URLs to scrape and additional options. 
 
-
-To call via API:
-
-POST url: https://api.apify.com/v2/acts/arlusm~upwork-scraper-with-fresh-job-posts/run-sync-get-dataset-items?token={YOUR_TOKEN}
-
-POST body content:
-
+Example:
 ```json
-"startUrls": 
-[
-  {
-    "url": "https://www.upwork.com/nx/search/jobs/?per_page=50&q=stripe",
-    "method": "GET"
-  }
-],
-"proxyCountryCode": "FR",
+{
+  "startUrls": [
+    {
+      "url": "https://www.fiverr.com/categories/programming-tech/wordpress-services"
+    },
+    {
+      "url": "https://www.fiverr.com/categories/digital-marketing/seo-services"
+    }
+  ],
+  "proxyCountryCode": "US"
+}
 ```
+
+### Fields:
+- **startUrls**: An array of URLs to scrape. These URLs should be Fiverr category or search result pages.
+- **proxyCountryCode** (optional): Country code for proxy usage (e.g., "US", "FR"). Defaults to "US" if not provided.
+
+---
+
+## API Call Example
+
+To call the scraper via API:
+
+**POST URL**:
+```
+https://api.apify.com/v2/acts/{YOUR_ACT_ID}/run-sync-get-dataset-items?token={YOUR_TOKEN}
+```
+
+**POST Body Content**:
+```json
+{
+  "startUrls": [
+    {
+      "url": "https://www.fiverr.com/categories/graphics-design/logo-design"
+    }
+  ],
+  "proxyCountryCode": "US"
+}
+```
+
+---
 
 ## Output
 
-The output is an array of job objects, with each object containing the following details:
+The scraper returns an array of gig objects, where each object contains detailed information about a Fiverr gig. 
 
-- **title**: The title of the job post
-- **link**: Direct URL to the job post
-- **paymentType**: Hourly or fixed-price payment type
-- **budget**: The job's budget (if available)
-- **projectLength**: Estimated project duration
-- **shortBio**: Description of the job
-- **skills**: List of required skills
-- **publishedDate**: When the job was posted
-- **normalizedDate**: publishedDate formatted in DateTime. This is not accurate, but rather an estimation,
-- **searchUrl**: The URL that was used for the job search
-
-Example output:
+### Example Output:
 ```json
 [
   {
-    "title": "Full Stack Web Developer",
-    "link": "https://www.upwork.com/job/full-stack-web-developer_~abcd1234",
-    "paymentType": "Hourly",
-    "budget": "$100.00",
-    "projectLength": "3-6 months",
-    "shortBio": "Looking for an experienced full-stack web developer...",
-    "skills": ["JavaScript", "React", "Node.js"],
-    "publishedDate": "Posted 6 minutes ago",
-    "normalizedDate": "2025-01-20T13:34:01.384Z",
-    "searchUrl": "https://www.upwork.com/search/jobs/?q=web%20developer"
+    "title": "I will create a profitable one product Shopify dropshipping store",
+    "gigUrl": "https://www.fiverr.com/lucassobrinho/create-30k-per-month-one-product-shopify-store",
+    "sellerName": "Lucas Sobrinho",
+    "sellerProfileUrl": "https://www.fiverr.com/lucassobrinho",
+    "rating": "4.9",
+    "reviews": "1k+",
+    "price": "€122",
+    "mediaType": "Video",
+    "mediaUrl": "https://fiverr-res.cloudinary.com/video/upload/t_fiverr_hd/q9fvvyjjl0f6brz5h08a",
+    "searchUrl": "https://www.fiverr.com/categories/programming-tech/wordpress-services"
+  },
+  {
+    "title": "I will build responsive WordPress website design",
+    "gigUrl": "https://www.fiverr.com/faisalshafiq842/work-for-5-for-wordpress-designing",
+    "sellerName": "Faisal Shafiq",
+    "sellerProfileUrl": "https://www.fiverr.com/faisalshafiq842",
+    "rating": "4.9",
+    "reviews": "530",
+    "price": "€102",
+    "mediaType": "Image",
+    "mediaUrl": "https://fiverr-res.cloudinary.com/t_gig_cards_web,q_auto,f_auto/gigs/133869484/original/e8ccb61e19b34a7a0a69deb45ad0375a004aefc7.jpeg",
+    "searchUrl": "https://www.fiverr.com/categories/programming-tech/wordpress-services"
   }
 ]
 ```
 
+### Fields:
+- **title**: The title of the gig.
+- **gigUrl**: Direct URL to the gig.
+- **sellerName**: Name of the seller offering the gig.
+- **sellerProfileUrl**: URL to the seller's Fiverr profile.
+- **rating**: Average rating of the gig.
+- **reviews**: Total number of reviews for the gig.
+- **price**: Starting price for the gig.
+- **mediaType**: Indicates whether the gig preview includes a video or image.
+- **mediaUrl**: URL to the gig's media (video or image).
+- **searchUrl**: The URL used for the search or category listing.
+
+---
+
 ## Usage
 
-The scraper can be configured via Apify’s interface. Simply provide the Upwork job search URL, and the scraper will return job data as described.
+1. **Configure Input**:
+   - Add the Fiverr category or search URLs in the `startUrls` field.
+   - Set `removeDuplicates` to `true` if you want to avoid duplicate gig entries.
 
+2. **Run the Scraper**:
+   - Use the Apify platform or API to execute the scraper.
 
-# fiver-scraper
+3. **Get Results**:
+   - Extract comprehensive gig data in JSON format.
+
+---
+
+This scraper is ideal for analyzing Fiverr categories, monitoring gig trends, and gathering data for research or business use cases.
+
+--- 
