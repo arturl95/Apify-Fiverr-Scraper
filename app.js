@@ -1,5 +1,5 @@
 const { Actor } = require('apify');
-const { CheerioCrawler } = require('crawlee');
+const { PuppeteerCrawler } = require('crawlee');
 const randomUserAgent = require('random-useragent');
 
 (async () => {
@@ -12,66 +12,99 @@ const randomUserAgent = require('random-useragent');
         throw new Error('No valid Start URLs provided in the input.');
     }
 
-    const { startUrls, removeDuplicates, proxyCountryCode } = input;
+    const { startUrls, proxyCountryCode } = input;
 
     const fiverrUrls = startUrls.map(item => item.url);
     const allScrapedGigs = [];
 
-    const crawler = new CheerioCrawler({
+    const crawler = new PuppeteerCrawler({
         useSessionPool: true,
-        persistCookiesPerSession: false,
         proxyConfiguration: await Actor.createProxyConfiguration({
             groups: ['RESIDENTIAL'],
             countryCode: proxyCountryCode ?? 'FR',
         }),
-        requestHandlerTimeoutSecs: 60,
-        preNavigationHooks: [
-            async ({ request }) => {
-                request.headers['User-Agent'] = randomUserAgent.getRandom() || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
-                request.headers['Accept-Language'] = 'en-US,en;q=0.9';
-                request.headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8';
-                request.headers['Connection'] = 'keep-alive';
-                request.headers['Upgrade-Insecure-Requests'] = '1';
-            }
-        ],
-        requestHandler: async ({ request, $ }) => {
+        launchContext: {
+            launchOptions: {
+                headless: true,
+            },
+        },
+        async requestHandler({ page, request }) {
             console.log(`Scraping: ${request.url}`);
 
-            const gigCards = $('.gig-card-layout');
-            const scrapedGigs = [];
+            // Simulate scrolling to load results
+            await page.goto(request.url, { waitUntil: 'domcontentloaded' });
+            await page.setUserAgent(randomUserAgent.getRandom() || 'Mozilla/5.0');
+            await page.setViewport({ width: 1280, height: 800 });
 
-            gigCards.each((index, gigCard) => {
-                try {
-                    const title = $(gigCard).find('p[role="heading"]').text().trim();
-                    const gigUrl = "https://www.fiverr.com" + $(gigCard).find('a[aria-label="Go to gig"]').attr('href');
-                    const sellerName = $(gigCard).find('.text-bold a').text().trim();
-                    const sellerProfileUrl = "https://www.fiverr.com" + $(gigCard).find('.text-bold').attr('href');
-                    const rating = $(gigCard).find('.rating-score').text().trim();
-                    const reviews = $(gigCard).find('.rating-count-number').text().trim();
-                    const price = $(gigCard).find('.text-bold span').last().text().trim();
-                    const mediaType = $(gigCard).find('video').length ? 'Video' : 'Image';
-                    const mediaUrl = mediaType === 'Video'
-                        ? $(gigCard).find('video source').attr('src')
-                        : $(gigCard).find('img').attr('src');
+            let scrapedGigs = [];
+            let startTime = Date.now();
+            const maxScrollTime = 20000; // 20 seconds
+            const maxResults = 50;
 
-                    scrapedGigs.push({
-                        title,
-                        gigUrl,
-                        sellerName,
-                        sellerProfileUrl,
-                        rating,
-                        reviews,
-                        price,
-                        mediaType,
-                        mediaUrl,
-                        searchUrl: request.url,
-                    });
-                } catch (error) {
-                    console.error('Error scraping gig card:', error.message);
-                }
-            });
+            while (Date.now() - startTime < maxScrollTime && scrapedGigs.length < maxResults) {
+                // Scroll to the bottom
+                const previousHeight = await page.evaluate(() => document.body.scrollHeight);
+                await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+                await page.waitForTimeout(2000); // Wait for content to load
 
-            allScrapedGigs.push(...scrapedGigs);
+                const newHeight = await page.evaluate(() => document.body.scrollHeight);
+                if (newHeight === previousHeight) break;
+
+                // Scrape gigs
+                const newGigs = await page.$$eval('.gig-card-layout', (gigCards) =>
+                    gigCards.map((gigCard) => {
+                        try {
+                            const titleElement = gigCard.querySelector('p[role="heading"]');
+                            const title = titleElement ? titleElement.textContent.trim() : '';
+
+                            const gigUrlElement = gigCard.querySelector('a[aria-label="Go to gig"]');
+                            const gigUrl = gigUrlElement ? `https://www.fiverr.com${gigUrlElement.getAttribute('href')}` : '';
+
+                            const sellerNameElement = gigCard.querySelector('.text-bold a');
+                            const sellerName = sellerNameElement ? sellerNameElement.textContent.trim() : '';
+
+                            const sellerProfileUrlElement = gigCard.querySelector('.text-bold a');
+                            const sellerProfileUrl = sellerProfileUrlElement ? `https://www.fiverr.com${sellerProfileUrlElement.getAttribute('href')}` : '';
+
+                            const ratingElement = gigCard.querySelector('.rating-score');
+                            const rating = ratingElement ? ratingElement.textContent.trim() : '';
+
+                            const reviewsElement = gigCard.querySelector('.rating-count-number');
+                            const reviews = reviewsElement ? reviewsElement.textContent.trim() : '';
+
+                            const priceElement = gigCard.querySelector('.text-bold span');
+                            const price = priceElement ? priceElement.textContent.trim() : '';
+
+                            const mediaType = gigCard.querySelector('video') ? 'Video' : 'Image';
+                            const mediaUrl = mediaType === 'Video'
+                                ? gigCard.querySelector('video source')?.getAttribute('src')
+                                : gigCard.querySelector('img')?.getAttribute('src');
+
+                            return {
+                                title,
+                                gigUrl,
+                                sellerName,
+                                sellerProfileUrl,
+                                rating,
+                                reviews,
+                                price,
+                                mediaType,
+                                mediaUrl,
+                            };
+                        } catch (error) {
+                            console.error('Error extracting gig data:', error.message);
+                            return null;
+                        }
+                    }).filter(Boolean)
+                );
+
+                scrapedGigs = [...scrapedGigs, ...newGigs];
+
+                // Stop if we reach 50 gigs
+                if (scrapedGigs.length >= maxResults) break;
+            }
+
+            allScrapedGigs.push(...scrapedGigs.slice(0, maxResults)); // Ensure we only push up to maxResults
         },
         failedRequestHandler({ request }) {
             console.error(`Failed to scrape ${request.url}`);
@@ -80,21 +113,6 @@ const randomUserAgent = require('random-useragent');
 
     await crawler.run(fiverrUrls);
 
-    let finalGigs = allScrapedGigs;
-
-    if (removeDuplicates) {
-        console.log('Final gigs before removing duplicates:', allScrapedGigs.length);
-        const uniqueGigUrls = new Set();
-        finalGigs = allScrapedGigs.filter(gig => {
-            if (uniqueGigUrls.has(gig.gigUrl)) {
-                return false;
-            }
-            uniqueGigUrls.add(gig.gigUrl);
-            return true;
-        });
-        console.log('Final gigs after removing duplicates:', finalGigs.length);
-    }
-
-    await Actor.pushData(finalGigs);
+    await Actor.pushData(allScrapedGigs);
     await Actor.exit();
 })();
