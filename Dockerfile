@@ -1,5 +1,4 @@
-# Use a lightweight Node.js base image
-FROM node:16-alpine
+FROM apify/actor-node-puppeteer-chrome:16
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
@@ -7,19 +6,13 @@ WORKDIR /usr/src/app
 # Copy the package.json and package-lock.json files first
 COPY package*.json ./
 
-# Install only production dependencies (no need for dev or optional dependencies)
-RUN npm install --omit=dev --omit=optional \
-    && echo "Installed NPM packages:" \
-    && (npm list --omit=dev --all || true) \
-    && echo "Node.js version:" \
-    && node --version \
-    && echo "NPM version:" \
-    && npm --version
+# Install production dependencies
+RUN npm install --omit=dev --omit=optional
 
 # Copy the rest of the application files
 COPY . .
 
-# Expose any necessary ports (optional)
+# Expose necessary ports (if any)
 # EXPOSE 3000
 
 # Start the application
