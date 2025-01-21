@@ -44,7 +44,7 @@ const randomUserAgent = require('random-useragent');
                 try {
                     const title = $(gigCard).find('p[role="heading"]').text().trim();
                     const gigUrl = "https://www.fiverr.com" + $(gigCard).find('a[aria-label="Go to gig"]').attr('href');
-                    const sellerName = $(gigCard).find('.text-bold').text().trim();
+                    const sellerName = $(gigCard).find('.text-bold a').text().trim();
                     const sellerProfileUrl = "https://www.fiverr.com" + $(gigCard).find('.text-bold').attr('href');
                     const rating = $(gigCard).find('.rating-score').text().trim();
                     const reviews = $(gigCard).find('.rating-count-number').text().trim();
