@@ -21,6 +21,13 @@
             "default": "FR",
             "maxLength": 2,
             "editor": "textfield"
+        },
+        "customCookies": {
+            "title": "Custom Cookies",
+            "type": "string",
+            "description": "Specify custom cookies as a single string. Example: 'key1=value1; key2=value2'",
+            "default": "",
+            "editor": "textfield"
         }
     },
     "required": ["startUrls"]

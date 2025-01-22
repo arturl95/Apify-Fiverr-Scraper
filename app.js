@@ -5,96 +5,115 @@ const randomUserAgent = require('random-useragent');
 (async () => {
     await Actor.init();
 
+    // Get input from the Apify Actor
     const input = await Actor.getInput();
-    console.log(JSON.stringify(input, null, 2));
+    console.log('Input received:', JSON.stringify(input, null, 2));
 
     if (!input || !Array.isArray(input.startUrls) || input.startUrls.length === 0) {
         throw new Error('No valid Start URLs provided in the input.');
     }
 
-    const { startUrls, removeDuplicates, proxyCountryCode } = input;
-
-    const fiverrUrls = startUrls.map(item => item.url);
+    const { startUrls } = input;
     const allScrapedGigs = [];
 
+    // Configure the CheerioCrawler
     const crawler = new CheerioCrawler({
         useSessionPool: true,
         persistCookiesPerSession: false,
-        proxyConfiguration: await Actor.createProxyConfiguration({
-            groups: ['RESIDENTIAL'],
-            countryCode: proxyCountryCode ?? 'FR',
-        }),
-        requestHandlerTimeoutSecs: 60,
-        preNavigationHooks: [
-            async ({ request }) => {
-                request.headers['User-Agent'] = randomUserAgent.getRandom() || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
-                request.headers['Accept-Language'] = 'en-US,en;q=0.9';
-                request.headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8';
-                request.headers['Connection'] = 'keep-alive';
-                request.headers['Upgrade-Insecure-Requests'] = '1';
-            }
-        ],
+
         requestHandler: async ({ request, $ }) => {
             console.log(`Scraping: ${request.url}`);
 
-            const gigCards = $('.gig-card-layout');
-            const scrapedGigs = [];
+            // Find the <script> tag containing the items array
+            let items = [];
+            $('script').each((index, element) => {
+                const scriptContent = $(element).html();
+                if (scriptContent && scriptContent.includes('"gigId"')) {
+                    try {
+                        const startIndex = scriptContent.indexOf('{');
+                        const endIndex = scriptContent.lastIndexOf('}');
+                        const jsonString = scriptContent.substring(startIndex, endIndex + 1);
 
-            gigCards.each((index, gigCard) => {
-                try {
-                    const title = $(gigCard).find('p[role="heading"]').text().trim();
-                    const gigUrl = "https://www.fiverr.com" + $(gigCard).find('a[aria-label="Go to gig"]').attr('href');
-                    const sellerName = $(gigCard).find('.text-bold a').text().trim();
-                    const sellerProfileUrl = "https://www.fiverr.com" + $(gigCard).find('.text-bold').attr('href');
-                    const rating = $(gigCard).find('.rating-score').text().trim();
-                    const reviews = $(gigCard).find('.rating-count-number').text().trim();
-                    const price = $(gigCard).find('.text-bold span').last().text().trim();
-                    const mediaType = $(gigCard).find('video').length ? 'Video' : 'Image';
-                    const mediaUrl = mediaType === 'Video'
-                        ? $(gigCard).find('video source').attr('src')
-                        : $(gigCard).find('img').attr('src');
-
-                    scrapedGigs.push({
-                        title,
-                        gigUrl,
-                        sellerName,
-                        sellerProfileUrl,
-                        rating,
-                        reviews,
-                        price,
-                        mediaType,
-                        mediaUrl,
-                        searchUrl: request.url,
-                    });
-                } catch (error) {
-                    console.error('Error scraping gig card:', error.message);
+                        const jsonData = JSON.parse(jsonString);
+                        if (jsonData.items) {
+                            items = jsonData.items;
+                        }
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error.message);
+                    }
                 }
             });
 
-            allScrapedGigs.push(...scrapedGigs);
+            if (!items.length) {
+                console.error('No items found in the page.');
+                return;
+            }
+
+            // Process and store gig details
+            const gigs = items.map(item => ({
+                gigId: item.gigId,
+                title: item.title,
+                sellerName: item.seller_name,
+                sellerProfileUrl: `https://www.fiverr.com${item.seller_url}`,
+                sellerCountry: item.seller_country || 'N/A',
+                sellerLevel: item.seller_level || 'N/A',
+                rating: item.seller_rating?.score || 'N/A',
+                reviews: item.seller_rating?.count || 0,
+                price: item.packages?.recommended?.price || 'N/A',
+                isPro: item.is_pro || false,
+                isFiverrChoice: item.is_fiverr_choice || false,
+                metadata: item.metadata?.map(meta => ({
+                    type: meta.type,
+                    value: meta.value,
+                })) || [],
+                mediaAssets: item.assets?.map(asset => ({
+                    type: asset.type,
+                    url: asset.cloud_img_main_gig || 'N/A',
+                })) || [],
+                attachments: item.attachments?.map(attachment => ({
+                    imageUrl: attachment.image_url || 'N/A',
+                    streamUrl: attachment.stream_url || 'N/A',
+                })) || [],
+                sellerLanguages: item.seller_languages?.map(lang => ({
+                    code: lang.code,
+                    level: lang.level,
+                })) || [],
+                agency: item.agency || {},
+                availability: item.seller_online ? "Online" : (item.is_seller_unavailable ? "Unavailable" : "Offline"),
+            }));
+
+            console.log('Extracted Gigs:', gigs);
+            allScrapedGigs.push(...gigs);
         },
+
         failedRequestHandler({ request }) {
             console.error(`Failed to scrape ${request.url}`);
         },
+
+        preNavigationHooks: [
+            async ({ request }) => {
+                // Set custom headers and cookies
+                request.headers = {
+                    'User-Agent': randomUserAgent.getRandom() || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept-Language': 'en-GB,en;q=0.6',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache',
+                    'Upgrade-Insecure-Requests': '1',
+                };
+
+                // Set custom cookies if needed
+                request.headers['Cookie'] = input.customCookies || '';
+            },
+        ],
     });
 
-    await crawler.run(fiverrUrls);
+    // Run the crawler
+    await crawler.run(startUrls);
 
-    let finalGigs = allScrapedGigs;
+    // Push the final data to the Apify dataset
+    await Actor.pushData(allScrapedGigs);
 
-    if (removeDuplicates) {
-        console.log('Final gigs before removing duplicates:', allScrapedGigs.length);
-        const uniqueGigUrls = new Set();
-        finalGigs = allScrapedGigs.filter(gig => {
-            if (uniqueGigUrls.has(gig.gigUrl)) {
-                return false;
-            }
-            uniqueGigUrls.add(gig.gigUrl);
-            return true;
-        });
-        console.log('Final gigs after removing duplicates:', finalGigs.length);
-    }
-
-    await Actor.pushData(finalGigs);
+    console.log('Scraping completed. Data pushed to the dataset.');
     await Actor.exit();
 })();
