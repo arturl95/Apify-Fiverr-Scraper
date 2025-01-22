@@ -59,30 +59,72 @@ The scraper returns an array of gig objects, where each object contains detailed
 ```json
 [
   {
-    "title": "I will create a profitable one product Shopify dropshipping store",
-    "gigUrl": "https://www.fiverr.com/lucassobrinho/create-30k-per-month-one-product-shopify-store",
-    "sellerName": "Lucas Sobrinho",
-    "sellerProfileUrl": "https://www.fiverr.com/lucassobrinho",
-    "rating": "4.9",
-    "reviews": "1k+",
-    "price": "€122",
-    "mediaType": "Video",
-    "mediaUrl": "https://fiverr-res.cloudinary.com/video/upload/t_fiverr_hd/q9fvvyjjl0f6brz5h08a",
-    "searchUrl": "https://www.fiverr.com/categories/programming-tech/wordpress-services"
-  },
-  {
-    "title": "I will build responsive WordPress website design",
-    "gigUrl": "https://www.fiverr.com/faisalshafiq842/work-for-5-for-wordpress-designing",
-    "sellerName": "Faisal Shafiq",
-    "sellerProfileUrl": "https://www.fiverr.com/faisalshafiq842",
-    "rating": "4.9",
-    "reviews": "530",
-    "price": "€102",
-    "mediaType": "Image",
-    "mediaUrl": "https://fiverr-res.cloudinary.com/t_gig_cards_web,q_auto,f_auto/gigs/133869484/original/e8ccb61e19b34a7a0a69deb45ad0375a004aefc7.jpeg",
-    "searchUrl": "https://www.fiverr.com/categories/programming-tech/wordpress-services"
+    "gigId": 371627339,
+    "title": "build, rebuild website development as full stack developer, front end developer",
+    "sellerName": "rank_champ",
+    "sellerProfileUrl": "https://www.fiverr.com/rank_champ",
+    "sellerCountry": "BD",
+    "sellerLevel": "level_two_seller",
+    "rating": 5,
+    "reviews": 172,
+    "price": 150,
+    "isPro": false,
+    "isFiverrChoice": false,
+    "metadata": [
+      {
+        "type": "website_type",
+        "value": [
+          "business"
+        ]
+      },
+      {
+        "type": "programming_language",
+        "value": [
+          "html_css",
+          "javascript",
+          "php",
+          "react",
+          "tailwind_css"
+        ]
+      },
+      {
+        "type": "website_features",
+        "value": [
+          "marketing",
+          "payment",
+          "forum",
+          "chat",
+          "membership",
+          "gallery",
+          "booking",
+          "dashboard",
+          "landing_page",
+          "blog"
+        ]
+      }
+    ],
+    "mediaAssets": [
+      {
+        "type": "ImageAsset",
+        "url": "https://fiverr-res.cloudinary.com/t_main1,q_auto,f_auto/gigs/371627339/original/f5acf84af4952823132bcc126b42dd10d5cb7f07.png"
+      }
+    ],
+    "attachments": [],
+    "sellerLanguages": [
+      {
+        "code": "en",
+        "level": 3
+      },
+      {
+        "code": "bn",
+        "level": 4
+      }
+    ],
+    "agency": {},
+    "availability": "Offline"
   }
 ]
+
 ```
 
 ### Fields:
