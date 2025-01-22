@@ -82,7 +82,7 @@ const randomUserAgent = require('random-useragent');
                 availability: item.seller_online ? "Online" : (item.is_seller_unavailable ? "Unavailable" : "Offline"),
             }));
 
-            console.log('Extracted Gigs:', JSON.stringify(gigs, null, 2));
+            //console.log('Extracted Gigs:', JSON.stringify(gigs, null, 2));
             allScrapedGigs.push(...gigs);
         },
 

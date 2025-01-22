@@ -12,43 +12,24 @@ Example:
 {
   "startUrls": [
     {
-      "url": "https://www.fiverr.com/categories/programming-tech/wordpress-services"
-    },
-    {
-      "url": "https://www.fiverr.com/categories/digital-marketing/seo-services"
+      "url": "https://www.fiverr.com/categories/programming-tech/website-development?source=hplo_subcat_first_step&pos=1",
+      "method": "GET"
     }
   ],
-  "proxyCountryCode": "US"
+  "proxyCountryCode": "FR",
+  "customCookies": ""
 }
 ```
 
 ### Fields:
 - **startUrls**: An array of URLs to scrape. These URLs should be Fiverr category or search result pages.
 - **proxyCountryCode** (optional): Country code for proxy usage (e.g., "US", "FR"). Defaults to "US" if not provided.
-
+- **customCookies**: A custom cookie to use.
 ---
 
 ## API Call Example
 
-To call the scraper via API:
-
-**POST URL**:
-```
-https://api.apify.com/v2/acts/{YOUR_ACT_ID}/run-sync-get-dataset-items?token={YOUR_TOKEN}
-```
-
-**POST Body Content**:
-```json
-{
-  "startUrls": [
-    {
-      "url": "https://www.fiverr.com/categories/graphics-design/logo-design"
-    }
-  ],
-  "proxyCountryCode": "US"
-}
-```
-
+See the API tab
 ---
 
 ## Output
