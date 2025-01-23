@@ -18,8 +18,13 @@ const randomUserAgent = require('random-useragent');
 
     // Configure the CheerioCrawler
     const crawler = new CheerioCrawler({
+        maxRequestRetries: 10,
         useSessionPool: true,
         persistCookiesPerSession: false,
+        proxyConfiguration: await Actor.createProxyConfiguration({
+        groups: ['RESIDENTIAL'], // Use Apify's residential proxy group
+        countryCode: input.proxyCountryCode || 'US',
+    }),
 
         requestHandler: async ({ request, $ }) => {
             console.log(`Scraping: ${request.url}`);
@@ -82,7 +87,7 @@ const randomUserAgent = require('random-useragent');
                 availability: item.seller_online ? "Online" : (item.is_seller_unavailable ? "Unavailable" : "Offline"),
             }));
 
-            //console.log('Extracted Gigs:', JSON.stringify(gigs, null, 2));
+            console.log('Extracted Gigs:', JSON.stringify(gigs, null, 2));
             allScrapedGigs.push(...gigs);
         },
 
